@@ -1,0 +1,7 @@
+{
+  "allowedOrigins": [
+    "https://fetching-data-zeta.vercel.app"
+  ],
+  "enableCors": true,
+  "apiKey": "06e401f5-fe18-4fb8-b2d0-6deca0054fa1"
+}

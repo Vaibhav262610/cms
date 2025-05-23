@@ -1,0 +1,18 @@
+[
+  {
+    "id": "7e64c46a-9012-4fb2-b959-49106cf4163e",
+    "title": "DIDDY",
+    "category": "education",
+    "content": "TESTING 1",
+    "imageUrl": "https://i.pinimg.com/736x/0c/ab/e8/0cabe8036fe675e5bbfe1145c8f51e65.jpg",
+    "createdAt": "2025-05-23T10:47:30.306Z"
+  },
+  {
+    "id": "3af2e727-df9b-444a-bc66-c08b02559da4",
+    "title": "DIDDY2",
+    "category": "health",
+    "content": "TESTING 2",
+    "imageUrl": "https://i.pinimg.com/736x/0c/ab/e8/0cabe8036fe675e5bbfe1145c8f51e65.jpg",
+    "createdAt": "2025-05-23T11:06:54.464Z"
+  }
+]

@@ -1,85 +1,79 @@
 "use server"
 
-import fs from "fs/promises"
-import path from "path"
-import { v4 as uuidv4 } from "uuid"
-
-const contentFilePath = path.join(process.cwd(), "data", "content.json")
-
-// Ensure the data directory exists
-async function ensureDataDirectory() {
-  const dataDir = path.join(process.cwd(), "data")
-  try {
-    await fs.access(dataDir)
-  } catch (error) {
-    await fs.mkdir(dataDir, { recursive: true })
-  }
-}
+import connectDB from './mongodb';
+import Content from '../models/Content';
 
 // Get all content
 export async function getContent() {
-  await ensureDataDirectory()
-
   try {
-    const fileData = await fs.readFile(contentFilePath, "utf-8")
-    return JSON.parse(fileData)
+    await connectDB();
+    const content = await Content.find().sort({ createdAt: -1 });
+    return JSON.parse(JSON.stringify(content));
   } catch (error) {
-    // If file doesn't exist, return empty array
-    return []
+    console.error('Error fetching content:', error);
+    return [];
   }
 }
 
 // Get content by ID
 export async function getContentById(id: string) {
-  const content = await getContent()
-  return content.find((item: any) => item.id === id)
+  try {
+    await connectDB();
+    const content = await Content.findById(id);
+    return content ? JSON.parse(JSON.stringify(content)) : null;
+  } catch (error) {
+    console.error('Error fetching content by ID:', error);
+    return null;
+  }
 }
 
 // Add new content
 export async function addContent(contentData: any) {
-  await ensureDataDirectory()
-
-  const content = await getContent()
-
-  const newContent = {
-    id: uuidv4(),
-    ...contentData,
-    createdAt: new Date().toISOString(),
+  try {
+    await connectDB();
+    const content = await Content.create({
+      title: contentData.title,
+      category: contentData.category,
+      content: contentData.content,
+      imageUrl: contentData.imageUrl,
+    });
+    return JSON.parse(JSON.stringify(content));
+  } catch (error) {
+    console.error('Error adding content:', error);
+    throw new Error('Failed to add content');
   }
-
-  content.push(newContent)
-  await fs.writeFile(contentFilePath, JSON.stringify(content, null, 2))
-
-  return newContent
 }
 
 // Update content
 export async function updateContent(id: string, contentData: any) {
-  const content = await getContent()
-
-  const index = content.findIndex((item: any) => item.id === id)
-  if (index === -1) {
-    throw new Error("Content not found")
+  try {
+    await connectDB();
+    const content = await Content.findByIdAndUpdate(
+      id,
+      {
+        ...contentData,
+        updatedAt: new Date(),
+      },
+      { new: true }
+    );
+    if (!content) {
+      throw new Error('Content not found');
+    }
+    return JSON.parse(JSON.stringify(content));
+  } catch (error) {
+    console.error('Error updating content:', error);
+    throw new Error('Failed to update content');
   }
-
-  content[index] = {
-    ...content[index],
-    ...contentData,
-    updatedAt: new Date().toISOString(),
-  }
-
-  await fs.writeFile(contentFilePath, JSON.stringify(content, null, 2))
-
-  return content[index]
 }
 
 // Delete content
 export async function deleteContent(id: string) {
-  const content = await getContent()
-
-  const newContent = content.filter((item: any) => item.id !== id)
-
-  await fs.writeFile(contentFilePath, JSON.stringify(newContent, null, 2))
-
-  return { success: true }
+  try {
+    await connectDB();
+    await Content.findByIdAndDelete(id);
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting content:', error);
+    throw new Error('Failed to delete content');
+  }
 }

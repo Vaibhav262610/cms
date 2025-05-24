@@ -1,8 +1,6 @@
 "use client"
 
-import type React from "react"
-
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -11,25 +9,47 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "@/components/ui/use-toast"
-import { updateContent } from "@/lib/content-actions"
+import { getContentById, updateContent } from "@/lib/content-actions"
 
-type ContentItem = {
-  id: string
-  title: string
-  category: string
-  content: string
-  imageUrl: string
+type EditContentFormProps = {
+  contentId: string
 }
 
-export function EditContentForm({ content }: { content: ContentItem }) {
+export function EditContentForm({ contentId }: EditContentFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
-    title: content.title,
-    category: content.category,
-    content: content.content,
-    imageUrl: content.imageUrl,
+    title: "",
+    subtitle: "",
+    category: "",
+    content: "",
+    imageUrls: [""],
   })
+
+  useEffect(() => {
+    const fetchContent = async () => {
+      try {
+        const data = await getContentById(contentId)
+        if (data) {
+          setFormData({
+            title: data.title,
+            subtitle: data.subtitle,
+            category: data.category,
+            content: data.content,
+            imageUrls: data.imageUrls || [""],
+          })
+        }
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to load content. Please try again.",
+          variant: "destructive",
+        })
+      }
+    }
+
+    fetchContent()
+  }, [contentId])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -40,12 +60,34 @@ export function EditContentForm({ content }: { content: ContentItem }) {
     setFormData((prev) => ({ ...prev, category: value }))
   }
 
+  const handleImageUrlChange = (index: number, value: string) => {
+    setFormData((prev) => {
+      const newImageUrls = [...prev.imageUrls]
+      newImageUrls[index] = value
+      return { ...prev, imageUrls: newImageUrls }
+    })
+  }
+
+  const addImageUrl = () => {
+    setFormData((prev) => ({
+      ...prev,
+      imageUrls: [...prev.imageUrls, ""]
+    }))
+  }
+
+  const removeImageUrl = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      imageUrls: prev.imageUrls.filter((_, i) => i !== index)
+    }))
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
 
     try {
-      await updateContent(content.id, formData)
+      await updateContent(contentId, formData)
       toast({
         title: "Content Updated",
         description: "Your content has been successfully updated.",
@@ -74,6 +116,18 @@ export function EditContentForm({ content }: { content: ContentItem }) {
               name="title"
               placeholder="Enter content title"
               value={formData.title}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="subtitle">Subtitle</Label>
+            <Input
+              id="subtitle"
+              name="subtitle"
+              placeholder="Enter subtitle"
+              value={formData.subtitle}
               onChange={handleChange}
               required
             />
@@ -109,15 +163,34 @@ export function EditContentForm({ content }: { content: ContentItem }) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="imageUrl">Image URL</Label>
-            <Input
-              id="imageUrl"
-              name="imageUrl"
-              placeholder="Enter image URL"
-              value={formData.imageUrl}
-              onChange={handleChange}
-              required
-            />
+            <Label>Images</Label>
+            {formData.imageUrls.map((url, index) => (
+              <div key={index} className="flex gap-2">
+                <Input
+                  placeholder="Enter image URL"
+                  value={url}
+                  onChange={(e) => handleImageUrlChange(index, e.target.value)}
+                  required
+                />
+                {formData.imageUrls.length > 1 && (
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    onClick={() => removeImageUrl(index)}
+                  >
+                    Remove
+                  </Button>
+                )}
+              </div>
+            ))}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={addImageUrl}
+              className="mt-2"
+            >
+              Add Another Image
+            </Button>
           </div>
 
           <div className="flex justify-end">

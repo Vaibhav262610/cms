@@ -17,6 +17,10 @@ export async function getContent() {
 
 // Get content by ID
 export async function getContentById(id: string) {
+  if (!id) {
+    return null;
+  }
+
   try {
     await connectDB();
     const content = await Content.findById(id);
@@ -31,15 +35,31 @@ export async function getContentById(id: string) {
 export async function addContent(contentData: any) {
   try {
     await connectDB();
+    
+    // Ensure we have at least one image URL
+    const imageUrls = Array.isArray(contentData.imageUrls) 
+      ? contentData.imageUrls.filter((url: string) => url.trim() !== '')
+      : [];
+
+    if (imageUrls.length === 0) {
+      throw new Error('Please provide at least one image URL');
+    }
+
+    // Create new content with only the new schema fields
     const content = await Content.create({
       title: contentData.title,
+      subtitle: contentData.subtitle,
       category: contentData.category,
       content: contentData.content,
-      imageUrl: contentData.imageUrl,
+      imageUrls: imageUrls,
     });
+
     return JSON.parse(JSON.stringify(content));
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error adding content:', error);
+    if (error.name === 'ValidationError') {
+      throw new Error(error.message);
+    }
     throw new Error('Failed to add content');
   }
 }

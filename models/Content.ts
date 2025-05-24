@@ -5,6 +5,10 @@ const ContentSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Please provide a title'],
   },
+  subtitle: {
+    type: String,
+    required: [true, 'Please provide a subtitle'],
+  },
   category: {
     type: String,
     required: [true, 'Please provide a category'],
@@ -13,9 +17,15 @@ const ContentSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Please provide content'],
   },
-  imageUrl: {
-    type: String,
-    required: [true, 'Please provide an image URL'],
+  imageUrls: {
+    type: [String],
+    required: [true, 'Please provide at least one image URL'],
+    validate: {
+      validator: function(v: string[]) {
+        return Array.isArray(v) && v.length > 0 && v.every(url => typeof url === 'string' && url.trim() !== '');
+      },
+      message: 'Please provide at least one valid image URL'
+    }
   },
   createdAt: {
     type: Date,
@@ -27,4 +37,9 @@ const ContentSchema = new mongoose.Schema({
   },
 });
 
-export default mongoose.models.Content || mongoose.model('Content', ContentSchema); 
+// Drop the old collection if it exists
+if (mongoose.models.Content) {
+  delete mongoose.models.Content;
+}
+
+export default mongoose.model('Content', ContentSchema); 

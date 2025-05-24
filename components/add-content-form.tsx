@@ -18,9 +18,10 @@ export function AddContentForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
     title: "",
+    subtitle: "",
     category: "",
     content: "",
-    imageUrl: "",
+    imageUrls: [""],
   })
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -30,6 +31,28 @@ export function AddContentForm() {
 
   const handleCategoryChange = (value: string) => {
     setFormData((prev) => ({ ...prev, category: value }))
+  }
+
+  const handleImageUrlChange = (index: number, value: string) => {
+    setFormData((prev) => {
+      const newImageUrls = [...prev.imageUrls]
+      newImageUrls[index] = value
+      return { ...prev, imageUrls: newImageUrls }
+    })
+  }
+
+  const addImageUrl = () => {
+    setFormData((prev) => ({
+      ...prev,
+      imageUrls: [...prev.imageUrls, ""]
+    }))
+  }
+
+  const removeImageUrl = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      imageUrls: prev.imageUrls.filter((_, i) => i !== index)
+    }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -72,6 +95,18 @@ export function AddContentForm() {
           </div>
 
           <div className="space-y-2">
+            <Label htmlFor="subtitle">Subtitle</Label>
+            <Input
+              id="subtitle"
+              name="subtitle"
+              placeholder="Enter subtitle"
+              value={formData.subtitle}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="category">Category</Label>
             <Select value={formData.category} onValueChange={handleCategoryChange} required>
               <SelectTrigger>
@@ -101,15 +136,34 @@ export function AddContentForm() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="imageUrl">Image URL</Label>
-            <Input
-              id="imageUrl"
-              name="imageUrl"
-              placeholder="Enter image URL"
-              value={formData.imageUrl}
-              onChange={handleChange}
-              required
-            />
+            <Label>Images</Label>
+            {formData.imageUrls.map((url, index) => (
+              <div key={index} className="flex gap-2">
+                <Input
+                  placeholder="Enter image URL"
+                  value={url}
+                  onChange={(e) => handleImageUrlChange(index, e.target.value)}
+                  required
+                />
+                {formData.imageUrls.length > 1 && (
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    onClick={() => removeImageUrl(index)}
+                  >
+                    Remove
+                  </Button>
+                )}
+              </div>
+            ))}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={addImageUrl}
+              className="mt-2"
+            >
+              Add Another Image
+            </Button>
           </div>
 
           <div className="flex justify-end">
